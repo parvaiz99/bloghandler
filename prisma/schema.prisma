@@ -1,0 +1,92 @@
+// prisma/schema.prisma
+
+// Specifies the Prisma Client generator
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Defines the database connection
+datasource db {
+  // Ensure this provider matches your database (postgresql, mysql, sqlite, etc.)
+  provider = "postgresql"
+  // Uses the DATABASE_URL from your .env file
+  url      = env("DATABASE_URL")
+}
+
+// --- Application Models ---
+
+// User model: Represents registered users
+model User {
+  id            String    @id @default(cuid()) // Unique ID (string, cuid is good default)
+  name          String?                        // Optional user name
+  email         String?   @unique               // User's email, must be unique
+  emailVerified DateTime?                      // Timestamp if email is verified (for OAuth or email verification flows)
+  password      String?                        // Hashed password (for Credentials provider login)
+  image         String?                        // URL to profile picture (often from OAuth)
+  createdAt     DateTime  @default(now())      // Timestamp when user was created
+  updatedAt     DateTime  @updatedAt           // Timestamp when user was last updated
+
+  // Relations
+  accounts Account[] // Relation to Account model (for OAuth)
+  sessions Session[] // Relation to Session model (for NextAuth sessions)
+  posts    Post[]    // Relation to Post model (a user can have many posts)
+}
+
+// Post model: Represents blog posts
+model Post {
+  id        String   @id @default(cuid())  // Unique ID for the post
+  title     String                         // Title of the post (required)
+  content   String?                        // Content of the post (optional, could be markdown, etc.)
+  published Boolean  @default(false)       // Flag to indicate if the post is published
+  createdAt DateTime @default(now())       // Timestamp when post was created
+  updatedAt DateTime @updatedAt            // Timestamp when post was last updated
+
+  // Relation to User (Author)
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade) // Links post to a user
+  authorId  String                         // Foreign key storing the author's User ID
+                                           // onDelete: Cascade means if a User is deleted, their Posts are also deleted.
+}
+
+
+// --- NextAuth.js Adapter Models ---
+// These models are required by the @next-auth/prisma-adapter
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String  // Provider type (e.g., "oauth", "email", "credentials")
+  provider          String  // Provider name (e.g., "google", "github", "credentials")
+  providerAccountId String  // User's ID on the provider's system
+  refresh_token     String? @db.Text // OAuth refresh token
+  access_token      String? @db.Text // OAuth access token
+  expires_at        Int?             // Token expiry timestamp
+  token_type        String?          // Token type (e.g., "Bearer")
+  scope             String?          // OAuth scope
+  id_token          String? @db.Text // OAuth ID token
+  session_state     String?          // OAuth session state
+
+  // Relation to User
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Unique constraint: a user can only have one account per provider
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique // The unique token for the session stored in the cookie
+  userId       String
+  expires      DateTime // When the session expires
+
+  // Relation to User
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String   // Usually email address for email verification
+  token      String   @unique // The unique verification token
+  expires    DateTime // When the token expires
+
+  // Unique constraint for identifier and token combination
+  @@unique([identifier, token])
+}
