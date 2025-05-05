@@ -1,4 +1,3 @@
-// src/app/posts/new/page.js
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -15,21 +14,16 @@ export default function NewPostPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
 
-  // --- Protection ---
-  // Redirect if not authenticated or during loading state
   useEffect(() => {
-    if (status === 'loading') return; // Do nothing while loading
+    if (status === 'loading') return;
     if (status === 'unauthenticated') {
-      // Redirect to login page if not logged in
-      router.push('/login?callbackUrl=/posts/new'); // Redirect back here after login
+      router.push('/login?callbackUrl=/posts/new');
     }
   }, [status, router]);
-  // --- End Protection ---
-
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(''); // Clear previous errors
+    setError('');
     setIsLoading(true);
 
     if (!title) {
@@ -37,11 +31,8 @@ export default function NewPostPage() {
       setIsLoading(false);
       return;
     }
-    // Add other client-side validation if needed (e.g., content length)
 
     try {
-      console.log('Submitting new post:', { title, content, published });
-
       const res = await fetch('/api/posts', {
         method: 'POST',
         headers: {
@@ -50,48 +41,35 @@ export default function NewPostPage() {
         body: JSON.stringify({ title, content, published }),
       });
 
-      const data = await res.json(); // Get response data (new post or error)
-      console.log('API Response:', data);
-
+      const data = await res.json();
       setIsLoading(false);
 
       if (!res.ok) {
-        // Use message from API response if available
         setError(data.message || `Error: ${res.status} ${res.statusText}`);
       } else {
-        // Post created successfully
-        console.log('Post created successfully:', data);
-        // Redirect to the newly created post's page (we need its ID from response)
-        // or redirect to the main blog page
-        // Assuming the API returns the created post object including its id:
         if (data?.id) {
-             router.push(`/blog/${data.id}`); // Go to the new post's page
+          router.push(`/blog/${data.id}`);
         } else {
-             router.push('/blog'); // Fallback to blog list
+          router.push('/blog');
         }
-
       }
     } catch (err) {
       setIsLoading(false);
-      console.error('Failed to create post:', err);
       setError('An unexpected error occurred. Please try again.');
     }
   };
 
-  // Render nothing or a loading indicator while checking session
   if (status === 'loading' || status === 'unauthenticated') {
     return (
-        <div className="text-center py-10">
-            <p>Loading session or redirecting...</p>
-            {/* Optional: Add a spinner */}
-        </div>
+      <div className="text-center py-10">
+        <p>Loading session or redirecting...</p>
+      </div>
     );
   }
 
-  // Render the form once authenticated
   return (
     <div className="max-w-2xl mx-auto p-4 sm:p-6 lg:p-8">
-      <h1 className="text-3xl font-bold mb-6 text-gray-800">Create New Post</h1>
+      <h1 className="text-3xl font-bold mb-6 text-gray-900">Create New Post</h1>
       <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-lg shadow-md">
         {/* Title Input */}
         <div>
@@ -104,7 +82,7 @@ export default function NewPostPage() {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             required
-            className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            className="block w-full px-4 py-3 text-gray-900 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-300 focus:border-blue-500 transition-all placeholder-gray-400"
             placeholder="Your Post Title"
             disabled={isLoading}
           />
@@ -120,7 +98,7 @@ export default function NewPostPage() {
             value={content}
             onChange={(e) => setContent(e.target.value)}
             rows={10}
-            className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            className="block w-full px-4 py-3 text-gray-900 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-300 focus:border-blue-500 transition-all placeholder-gray-400"
             placeholder="Write your post content here..."
             disabled={isLoading}
           ></textarea>
@@ -134,7 +112,7 @@ export default function NewPostPage() {
             type="checkbox"
             checked={published}
             onChange={(e) => setPublished(e.target.checked)}
-            className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded disabled:opacity-50"
+            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded disabled:opacity-50"
             disabled={isLoading}
           />
           <label htmlFor="published" className="ml-2 block text-sm text-gray-900">
@@ -144,17 +122,28 @@ export default function NewPostPage() {
 
         {/* Error Message */}
         {error && (
-          <p className="text-sm text-center text-red-600 bg-red-100 p-3 rounded-md">{error}</p>
+          <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded">
+            <p className="font-medium">Error</p>
+            <p>{error}</p>
+          </div>
         )}
 
         {/* Submit Button */}
         <div>
           <button
             type="submit"
-            disabled={isLoading || status !== 'authenticated'} // Disable if loading or not logged in
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={isLoading || status !== 'authenticated'}
+            className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all"
           >
-            {isLoading ? 'Creating...' : 'Create Post'}
+            {isLoading ? (
+              <span className="flex items-center justify-center gap-2">
+                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Creating...
+              </span>
+            ) : 'Create Post'}
           </button>
         </div>
       </form>

@@ -1,8 +1,8 @@
-// src/app/api/auth/[...nextauth]/route.js
+
 import NextAuth from 'next-auth';
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import prisma from '@/lib/prisma'; // Ensure this path is correct
+import prisma from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 
 export const authOptions = {
@@ -16,11 +16,10 @@ export const authOptions = {
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials, req) {
-        console.log("Authorize function called with credentials:", credentials?.email); // Debug log
-
+        console.log("Authorize function called with credentials:", credentials?.email);
         if (!credentials?.email || !credentials?.password) {
           console.log('Missing email or password in authorize');
-          throw new Error('Missing email or password.'); // Throw error for clearer feedback
+          throw new Error('Missing email or password.');
         }
 
         const user = await prisma.user.findUnique({
@@ -36,8 +35,8 @@ export const authOptions = {
 
         // Check if user registered with credentials (has a password)
         if (!user.password) {
-            console.log('User found but has no password set (maybe OAuth user)');
-            throw new Error('This account does not have a password set.');
+          console.log('User found but has no password set (maybe OAuth user)');
+          throw new Error('This account does not have a password set.');
         }
 
         const isValidPassword = await bcrypt.compare(
@@ -60,19 +59,19 @@ export const authOptions = {
         };
       },
     }),
-    // Add other providers like Google, GitHub here if needed
+
   ],
 
   session: {
-    strategy: 'jwt', // Use JWTs for session management
+    strategy: 'jwt',
   },
 
-  secret: process.env.NEXTAUTH_SECRET, // Essential for JWT encryption
+  secret: process.env.NEXTAUTH_SECRET,
 
   pages: {
-    signIn: '/login', // Redirect to /login for sign-in
-    error: '/auth/error', // Page to display auth errors (optional to create)
-     // newUser: '/register' // Only relevant if using OAuth providers
+    signIn: '/login',
+    error: '/auth/error',
+
   },
 
   callbacks: {
@@ -86,7 +85,7 @@ export const authOptions = {
     // Add user ID to the session object from the JWT
     async session({ session, token }) {
       if (token && session.user) {
-        session.user.id = token.id; // Make user ID available in useSession()
+        session.user.id = token.id;
       }
       return session;
     },

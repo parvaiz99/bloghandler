@@ -1,9 +1,7 @@
-// src/app/api/posts/route.js
-
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next'; // To get session server-side
-import { authOptions } from '@/app/api/auth/[...nextauth]/route'; // Import your authOptions
+import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 
 // POST /api/posts - Create a new post
 export async function POST(req) {
@@ -24,14 +22,8 @@ export async function POST(req) {
       return NextResponse.json({ message: 'Title is required' }, { status: 400 });
     }
     if (title.length > 150) {
-         return NextResponse.json({ message: 'Title cannot exceed 150 characters' }, { status: 400 });
+      return NextResponse.json({ message: 'Title cannot exceed 150 characters' }, { status: 400 });
     }
-     // Content is optional according to schema, but you might require it
-    // if (!content) {
-    //   return NextResponse.json({ message: 'Content is required' }, { status: 400 });
-    // }
-    // --- End Validation ---
-
 
     const userId = session.user.id; // Get user ID from session
 
@@ -40,9 +32,9 @@ export async function POST(req) {
     const newPost = await prisma.post.create({
       data: {
         title: title,
-        content: content, // Content can be null/optional based on schema
-        published: published || false, // Default to false if not provided
-        authorId: userId, // Link the post to the logged-in user
+        content: content,
+        published: published || false,
+        authorId: userId,
       },
     });
 
@@ -64,49 +56,41 @@ export async function POST(req) {
 
 // GET /api/posts - Get all PUBLISHED posts
 export async function GET(req) {
-    // Note: No session check here, as we want public access to published posts
 
-    // Optional: Add query parameters for pagination, filtering later
-    // const { searchParams } = new URL(req.url);
-    // const page = searchParams.get('page') || '1';
-    // const limit = searchParams.get('limit') || '10';
 
-    try {
-        console.log("API: Fetching all published posts");
+  try {
+    console.log("API: Fetching all published posts");
 
-        const posts = await prisma.post.findMany({
-            where: {
-                published: true, // Only fetch published posts
-            },
-            include: {
-                author: { // Include author information (select specific fields)
-                    select: {
-                        id: true,
-                        name: true,
-                        email: true, // Or maybe just name/id
-                    },
-                },
-            },
-            orderBy: {
-                createdAt: 'desc', // Order by newest first
-            },
-            // Add pagination logic here using skip/take if implementing
-            // skip: (parseInt(page) - 1) * parseInt(limit),
-            // take: parseInt(limit),
-        });
+    const posts = await prisma.post.findMany({
+      //************************    ONLY PUBLISHED**************** */
+      where: {
+        published: true,
+      },
+      include: {
+        author: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
 
-        // Optional: Get total count for pagination headers/metadata
-        // const totalPosts = await prisma.post.count({ where: { published: true } });
+    });
 
-        console.log(`API: Found ${posts.length} published posts`);
 
-        return NextResponse.json(posts, { status: 200 });
+    console.log(`API: Found ${posts.length} published posts`);
 
-    } catch (error) {
-        console.error("API Error Fetching Posts:", error);
-        return NextResponse.json(
-          { message: 'Failed to fetch posts', error: error.message },
-          { status: 500 }
-        );
-    }
+    return NextResponse.json(posts, { status: 200 });
+
+  } catch (error) {
+    console.error("API Error Fetching Posts:", error);
+    return NextResponse.json(
+      { message: 'Failed to fetch posts', error: error.message },
+      { status: 500 }
+    );
+  }
 }

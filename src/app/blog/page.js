@@ -1,74 +1,93 @@
-// src/app/blog/page.js
 import Link from 'next/link';
-import prisma from '@/lib/prisma'; // Import your prisma instance
+import prisma from '@/lib/prisma';
 
-// Add this line to force dynamic rendering (SSR-like behavior) for this page
 export const dynamic = 'force-dynamic';
 
-// Function to fetch data - runs on the server
 async function getPosts() {
   try {
-    // Added (dynamic) to log message for clarity
     console.log("Blog Page: Fetching published posts (dynamic)...");
     const posts = await prisma.post.findMany({
-      where: { published: true }, // Fetch only published posts
+      where: { published: true },
       include: {
         author: {
-          select: { name: true }, // Only fetch author's name
+          select: { name: true },
         },
       },
       orderBy: {
-        createdAt: 'desc', // Show newest first
+        createdAt: 'desc',
       },
     });
-    // Added (dynamic) to log message for clarity
     console.log(`Blog Page: Found ${posts.length} published posts (dynamic).`);
     return posts;
   } catch (error) {
     console.error("Blog Page: Failed to fetch posts (dynamic):", error);
-    // In a real app, you might want to throw the error or return an empty array/error state
     return [];
   }
 }
 
-
-// The Page component itself (Server Component)
 export default async function BlogListPage() {
-  // Fetch data directly within the Server Component
   const posts = await getPosts();
 
   return (
-    // Added bg-gray-50 previously, keeping it for potential light background if needed
-    <div className="max-w-3xl mx-auto p-4 sm:p-6 lg:p-8 bg-gray-50">
-      <h1 className="text-3xl font-bold mb-8 text-center text-gray-800">Blog Posts</h1>
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
 
-      {/* Display message if no posts found */}
+      <div className="text-center mb-12">
+        <h1 className="text-4xl font-bold text-gray-900 mb-3">Blog Posts</h1>
+        <div className="w-20 h-1 bg-blue-400 mx-auto mb-4"></div>
+        <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          Discover the latest articles from our community
+        </p>
+      </div>
+
       {posts.length === 0 ? (
-        <p className="text-center text-gray-600">No published posts yet.</p>
+        <div className="text-center py-12 bg-blue-50 rounded-xl border border-blue-100">
+          <svg className="w-12 h-12 text-blue-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <p className="text-gray-700">No published posts yet.</p>
+        </div>
       ) : (
-        // Display list of posts
-        <div className="space-y-6">
+        <div className="space-y-8">
           {posts.map((post) => (
-            <article key={post.id} className="p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200">
-              {/* Post Title as Link */}
-              <h2 className="text-2xl font-semibold mb-2 text-indigo-700 hover:text-indigo-900">
-                <Link href={`/blog/${post.id}`}>
+            <article
+              key={post.id}
+              className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 border border-gray-100"
+            >
+              <Link href={`/blog/${post.id}`} className="block p-6 sm:p-8">
+                <div className="flex justify-between items-start mb-3">
+                  <span className="text-sm text-blue-500 font-medium">
+                    {new Date(post.createdAt).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric'
+                    })}
+                  </span>
+                  <span className="text-xs bg-blue-50 text-blue-600 px-2.5 py-1 rounded-full">
+                    {post.author?.name || 'Unknown Author'}
+                  </span>
+                </div>
+
+                <h2 className="text-xl font-bold text-gray-900 mb-3 hover:text-blue-500 transition-colors">
                   {post.title}
-                </Link>
-              </h2>
-              {/* Author and Date */}
-              <p className="text-sm text-gray-500 mb-3">
-                By {post.author?.name || 'Unknown Author'} on {new Date(post.createdAt).toLocaleDateString()}
-              </p>
-              {/* Content Snippet */}
-              {post.content && (
-                <p className="text-gray-700 line-clamp-3"> {/* Shows first 3 lines */}
-                  {post.content}
-                </p>
-              )}
-              {/* Read More Link */}
-              <Link href={`/blog/${post.id}`} className="text-indigo-600 hover:text-indigo-800 inline-block mt-3 text-sm font-medium">
-                Read more →
+                </h2>
+
+                {post.content && (
+                  <p className="text-gray-600 mb-4 line-clamp-2">
+                    {post.content}
+                  </p>
+                )}
+
+                <div className="flex items-center text-blue-500 group">
+                  <span className="font-medium">Read more</span>
+                  <svg
+                    className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
               </Link>
             </article>
           ))}
@@ -77,6 +96,3 @@ export default async function BlogListPage() {
     </div>
   );
 }
-
-// Note: 'export const revalidate = 60;' should be removed or commented out
-// when using 'export const dynamic = 'force-dynamic';'

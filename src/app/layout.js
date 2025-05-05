@@ -1,4 +1,3 @@
-// src/app/layout.js
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Providers from './providers';
@@ -23,15 +22,13 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body
-       className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-100 text-gray-900 flex flex-col min-h-screen`} // <-- Check bg-gray-100 here
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-100 text-gray-900 flex flex-col min-h-screen`}
       >
         <Providers>
-          <Navbar /> {/* <-- Add the Navbar component here */}
-          <main className="container mx-auto px-4 py-8 flex-grow"> {/* Added flex-grow */}
-             {children}
+          <Navbar />
+          <main className="container mx-auto px-4 py-8 flex-grow bg-white">
+            {children}
           </main>
-          {/* Optional: Add a Footer component here later */}
-          {/* <Footer /> */}
         </Providers>
       </body>
     </html>
